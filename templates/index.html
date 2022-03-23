@@ -12,7 +12,9 @@
   <img src="{{ url_for('static', filename='logo_96_en_new.png') }}" class="icon" />
   <h3>COS521 - GPT-3 Based Rule Generation</h3>
   <form action="/" method="post">
-    <input type="text" name="prompt" placeholder="Enter a rule" required />
+    <textarea name="prompt" cols="80" rows="10" required>
+      Enter a rule
+    </textarea>
     <input type="submit" value="Generate symbolic rule" />
   </form>
   {% if result %}
