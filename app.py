@@ -12,7 +12,7 @@ def index():
     if request.method == "POST":
         prompt = request.form["prompt"]
         response = openai.Completion.create(
-            model="ada:ft-ouc-vitor-experimentation-2022-03-22-21-27-23",
+            model="davinci:ft-ouc-vitor-experimentation-2022-03-30-19-55-21",
             prompt=generate_prompt(prompt),
             temperature=0.6,
         )
