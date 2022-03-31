@@ -16,7 +16,10 @@ def index():
             prompt=generate_prompt(prompt),
             temperature=0.6,
         )
-        return redirect(url_for("index", result=response.choices[0].text))
+        try:
+            return redirect(url_for("index", result=response.choices[0].text))
+        except openai.error.RateLimitError as e:
+            return redirect(url_for("index", result=f"{e}"))
 
     result = request.args.get("result")
     return render_template("index.html", result=result)
