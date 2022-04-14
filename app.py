@@ -1,28 +1,45 @@
 import os
+import requests
 
 import openai
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-@app.route("/", methods=("GET", "POST"))
+@app.route("/")
 def index():
-    if request.method == "POST":
-        prompt = request.form["prompt"]
+    return render_template("index.html")
+
+
+@app.route("/_run_model", methods=['POST'])
+def run_model():
+    prompt = request.form["prompt"]
+
+    try:
         response = openai.Completion.create(
             model="davinci:ft-ouc-vitor-experimentation-2022-03-30-19-55-21",
             prompt=generate_prompt(prompt),
             temperature=0.6,
         )
-        try:
-            return redirect(url_for("index", result=response.choices[0].text))
-        except openai.error.RateLimitError as e:
-            return redirect(url_for("index", result=f"{e}"))
+    except openai.error.RateLimitError as e:
+        app.logger.info(f"*** ERROR: {e}")
+        return jsonify(f"Error: {e}")
+    
+    completion = response["choices"][0]["text"]
 
-    result = request.args.get("result")
-    return render_template("index.html", result=result)
+    return jsonify({"result": completion})
+
+
+@app.route("/_models")
+def models():
+    url = "https://api.openai.com/v1/fine-tunes"
+    headers = {'Authorization': f'Bearer {openai.api_key}'}
+
+    r = requests.get(url, headers=headers)
+    
+    return jsonify(r)
 
 
 def generate_prompt(prompt):
