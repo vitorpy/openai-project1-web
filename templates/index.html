@@ -1,43 +1,51 @@
-<!DOCTYPE html>
-<head>
-  <title>COS521 - Project - vpb</title>
-  <link
-    rel="shortcut icon"
-    href="{{ url_for('static', filename='logo_96_en_new.png') }}"
-  />
-  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-</head>
+{% extends "base.html" %}
 
-<body>
-  <img src="{{ url_for('static', filename='logo_96_en_new.png') }}" class="icon" />
-  <h3>COS521 - GPT-3 Based Rule Generation</h3>
+{% block title %}COS521 - GPT-3 Based Rule Generation{% endblock %}
 
-  <form id="submission">
-    <textarea name="prompt" cols="80" rows="10" required>
-      Enter a rule
-    </textarea>
-    <input type="submit" value="Generate symbolic rule" />
-  </form>
+{% block content %}
+<form id="submission">
+  <div>
+    Model:
+    <select name="model" id="model-select"></select>
+  </div>
+  <textarea name="prompt" cols="80" rows="10" required>Enter a rule</textarea>
+  <input id="prompt-submit" type="submit" value="Generate symbolic rule" disabled/>
+</form>
 
-  <div id="result"></div>
+<div id="result"></div>
+
+<a href="{{ url_for('new_model') }}">New model...</a>
+
+<script>
+  function sendPrompt(event) {
+    event.preventDefault();
+    $("#prompt-submit").prop("disabled", true);
+        
+    $.ajax({
+      method: 'POST',
+      url: "{{ url_for('run_model') }}",
+      data: $(this).serialize()
+    }).done(displayResult);
+  }
   
-  <script>
-    function sendPrompt(event) {
-      event.preventDefault();
-          
-      $.ajax({
-        method: 'POST',
-        url: {{ url_for('run_model')|tojson }},
-        data: $(this).serialize()
-      }).done(displayResult);
-    }
-    
-    function displayResult(data) {
-        $("#result").text(data.result);
-    }
+  function displayResult(data) {
+    $("#result").text(data.result);
+    $("#prompt-submit").prop("disabled", false);
+  }
+  
+  function pageLoad() {
+    $.ajax({
+      method: 'GET',
+      url: "{{ url_for('models') }}",
+    }).done(loadModels);
+  }
 
-    $('#submission').on('submit', sendPrompt);
-  </script>
+  function loadModels(data) {
+    data["models"].forEach(element => $("#model-select").append(new Option(element, element)));
+    $("#prompt-submit").prop("disabled", false);
+  }
 
-</body>
+  $('#submission').on('submit', sendPrompt);
+  $(document).ready(pageLoad);
+</script>
+{% endblock %}

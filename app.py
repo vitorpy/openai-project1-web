@@ -13,19 +13,24 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/newmodel")
+def new_model():
+    return render_template("newmodel.html")
+
+
 @app.route("/_run_model", methods=['POST'])
 def run_model():
     prompt = request.form["prompt"]
 
     try:
         response = openai.Completion.create(
-            model="davinci:ft-ouc-vitor-experimentation-2022-03-30-19-55-21",
+            model=request.form["model"],
             prompt=generate_prompt(prompt),
-            temperature=0.6,
+            temperature=0,
         )
     except openai.error.RateLimitError as e:
         app.logger.info(f"*** ERROR: {e}")
-        return jsonify(f"Error: {e}")
+        return jsonify({"result": f"Error: {e}"})
     
     completion = response["choices"][0]["text"]
 
@@ -38,8 +43,18 @@ def models():
     headers = {'Authorization': f'Bearer {openai.api_key}'}
 
     r = requests.get(url, headers=headers)
+    app.logger.info(f"*** {r}")
+
+    if r.status_code != 200:
+        return jsonify({"models": []})
+
+    r = r.json() 
+    model_names = []
+    for element in r["data"]:
+        name = element["fine_tuned_model"]
+        model_names.append(name)
     
-    return jsonify(r)
+    return jsonify({"models": model_names})
 
 
 def generate_prompt(prompt):
