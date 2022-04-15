@@ -3,8 +3,44 @@
 {% block title %}COS521 - New model{% endblock %}
 
 {% block content %}
-Lorem ipsum
+See the documentation <a href="https://beta.openai.com/docs/api-reference/fine-tunes/create">here</a>.
+
+<form id="submission">
+    <label for="training-file">Training file:</label>
+    <input type="file" id="training-file" name="training-file" />
+    <label for="model">Model:</label>
+    <select id="model" name="model">
+        <option>ada</option>
+        <option>babbage</option>
+        <option>curie</option>
+        <option>davinci</option>
+    </select>
+    <label for="suffix">Name: </label>
+    <input type="text" id="suffix" name="suffix" />
+    <input id="model-submit" type="submit" />
+</form>
+
+<div id="result"></div>
 
 <a href="{{ url_for('index') }}">Back...</a>
 
+<script>
+  function createFineTune(event) {
+    event.preventDefault();
+    $("#model-submit").prop("disabled", true);
+        
+    $.ajax({
+      method: 'POST',
+      url: "{{ url_for('new_fine_tune') }}",
+      data: $(this).serialize()
+    }).done(displayResult);
+  }
+
+  function displayResult(data) {
+    $("#result").text(data.result);
+    $("#model-submit").prop("disabled", false);
+  }
+
+  $('#submission').on('submit', createFineTune);
+</script>
 {% endblock %}
