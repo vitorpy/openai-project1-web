@@ -28,12 +28,26 @@ See the documentation <a href="https://beta.openai.com/docs/api-reference/fine-t
   function createFineTune(event) {
     event.preventDefault();
     $("#model-submit").prop("disabled", true);
-        
-    $.ajax({
-      method: 'POST',
-      url: "{{ url_for('new_fine_tune') }}",
-      data: $(this).serialize()
-    }).done(displayResult);
+          
+    var reader = new FileReader();
+    var file = $("#training-file")[0].files[0];
+    reader.readAsText(file, 'UTF-8');
+    reader.onload = shipOff;
+          
+    //https://stackoverflow.com/questions/4006520/using-html5-file-uploads-with-ajax-and-jquery
+    function shipOff(event) {
+        var formData = new FormData(document.getElementById("submission"));
+        formData.append("training-file", event.target.result)
+            
+        $.ajax({
+          method: 'POST',
+          url: "{{ url_for('new_fine_tune') }}",
+          data: formData,
+          cache: false,
+          contentType: false,
+          processData: false
+        }).done(displayResult);
+    }
   }
 
   function displayResult(data) {

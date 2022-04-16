@@ -1,5 +1,6 @@
 import os
 import requests
+import json
 
 import openai
 from flask import Flask, render_template, request, jsonify
@@ -62,23 +63,25 @@ def models():
 
 @app.route("/_new_fine_tune", methods=['POST'])
 def new_fine_tune():
-    file_url = "https://api.openai.com/v1/files"
-    headers = {'Authorization': f'Bearer {openai.api_key}'}
-    
-    data = { "file": request.form["training-file"], "purporse": "fine-tune" }
+    file_data = request.form["training-file"]
+    try:
+        ft_file = openai.File.create(file_data, "fine-tune")
+    except Exception as e:
+        return jsonify({"result": f"Failed to upload training file {e}."})
+        
+    file_id = ft_file["id"]
+    base_model = request.form["model"]
+    suffix = request.form["suffix"]
 
-    r = requests.post(file_url, data=jsonify(data), headers=headers)
-    if r.status_code != 200:
-        return jsonify({"result": f"Failed to upload file to OpenAI {r}."})
-    r = r.json()
-
-    file_id = r["id"]
+    data = { "training_file": file_id, "model": base_model, "suffix": suffix }
 
     url = "https://api.openai.com/v1/fine-tunes"
-
-    data = { "training_file": file_id, "model": request.form["model"], "suffix": request.form["suffix"] }
-
-    r = requests.post(url, data=jsonify(data), headers=headers)
+    headers = {
+        'Authorization': f'Bearer {openai.api_key}',
+        'Content-type': 'application/json',
+    }
+    
+    r = requests.post(url, data=json.dumps(data), headers=headers)
     if r.status_code != 200:
         return jsonify({"result": f"Failed to create fine-tuned model {r}."})
 
